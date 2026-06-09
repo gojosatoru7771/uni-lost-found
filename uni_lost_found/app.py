@@ -93,6 +93,7 @@ with tab2:
             if not title or not description:
                 st.error("Пожалуйста, заполните название и описание!")
             else:
+
                 img_path = None
                 if uploaded_file is not None:
                     image = Image.open(uploaded_file)
@@ -119,7 +120,7 @@ with tab2:
                             matches.append(item)
 
                 st.session_state.db_items.append(new_item)
-                st.balloons()  # Эффект разлетающихся шариков при успехе!
+                st.balloons()
                 st.success("🎉 Объявление успешно добавлено!")
 
                 if matches:
@@ -127,3 +128,28 @@ with tab2:
                     for m in matches:
                         st.write(
                             f" В базе есть предмет: **{m['title']}** в локации *{m['location']}* (Описание: {m['description']})")
+
+
+                        import boto3
+                        from botocore.exceptions import NoCredentialsError
+
+
+                        AWS_ACCESS_KEY = "ТВОЙ_AWS_ACCESS_KEY"
+                        AWS_SECRET_KEY = "ТВОЙ_AWS_SECRET_KEY"
+                        BUCKET_NAME = "uni-lost-found-images"
+
+
+                        def upload_to_aws(local_file, s3_file_name):
+                            s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY,
+                                              aws_secret_access_key=AWS_SECRET_KEY)
+                            try:
+                                s3.upload_fileobj(local_file, BUCKET_NAME, s3_file_name,
+                                                  ExtraArgs={'ACL': 'public-read'})
+
+                                url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{s3_file_name}"
+                                return url
+                            except FileNotFoundError:
+                                return None
+                            except NoCredentialsError:
+                                st.error("Ошибка авторизации в AWS. Проверь ключи доступа!")
+                                return None
